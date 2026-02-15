@@ -82,11 +82,7 @@ Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o
 
 ## Exemplo pronto (Paper/Spigot)
 
-Existe um exemplo simples (um único arquivo Java) no repositório:
-
-- [examples/minecraft-license-plugin/src/main/java/com/artix/example/ArtixLicensePlugin.java](examples/minecraft-license-plugin/src/main/java/com/artix/example/ArtixLicensePlugin.java)
-- [examples/minecraft-license-plugin/src/main/resources/config.yml](examples/minecraft-license-plugin/src/main/resources/config.yml)
-
+Existe um exemplo simples (um único arquivo Java) no repositório, você pode conferir nos arquivos.
 Ele já vem com:
 
 - Comandos para setar/validar key
