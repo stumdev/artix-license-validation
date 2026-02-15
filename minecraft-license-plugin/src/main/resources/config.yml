@@ -1,0 +1,15 @@
+# Artix license validation config
+
+apiUrl: "https://artix.sideload.lol/api/license/validate"
+licenseKey: ""
+serverName: "MyServer"
+pluginVersion: "1.0.0"
+
+# Cache to avoid validating every restart / every minute
+cacheMinutes: 10
+
+# If validation fails due to network issues, allow server to keep running
+# for this many minutes since the last successful validation.
+offlineGraceMinutes: 60
+
+debug: false
