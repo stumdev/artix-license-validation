@@ -121,13 +121,8 @@ curl -s -X POST \
 ## FAQ
 
 ### “Meu servidor mudou de IP e a licença parou”
-Isso é esperado: a licença fica vinculada ao primeiro IP (`boundIp`). É necessário **resetar a ativação** no painel/admin e validar novamente para fazer bind no novo IP.
+Isso é esperado: a licença fica vinculada ao primeiro IP (`boundIp`). É necessário **resetar o IP** no painel/admin e validar novamente para fazer bind no novo IP.
 
 ### “Estou atrás de proxy, vai validar?”
 Sim, desde que o proxy/CDN passe o IP público corretamente (`X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP`).
 
----
-
-Para detalhes completos das regras server-side, veja:
-
-- [LICENSE_VALIDATION.md](LICENSE_VALIDATION.md)
