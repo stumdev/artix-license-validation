@@ -1,6 +1,16 @@
-# Integração DRM — Validação de Licença (para devs de plugins)
+# Artix License Validation
 
-Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o sistema de licenças do Artix.
+> Guia e exemplo Java para validar licenças de plugins Minecraft pela API do Artix.
+
+| Campo | Valor |
+| --- | --- |
+| Tipo | Guia de integração com plugin de exemplo |
+| Exemplo | Plugin Paper 1.20 (Java 17) |
+| API | `https://artix.sideload.lol/api/license/validate` |
+| Mantido por | stumdev |
+| Licença | Não especificada |
+
+Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o sistema de licenças do Artix. O plugin de exemplo está em [`minecraft-license-plugin/`](minecraft-license-plugin).
 
 ## URL da API (produção)
 
@@ -71,7 +81,7 @@ Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o
 - `429` rate limit
 - `500` erro interno
 
-## Regras importantes (pra não dar dor de cabeça)
+## Regras importantes
 
 - **Faça a validação de forma assíncrona** (não bloqueie a main thread do servidor).
 - **Use cache** (ex.: 5–10 minutos). Não valide em loop.
