@@ -1,35 +1,81 @@
-# Artix License Validation
+<div align="center">
 
-> Guia e exemplo Java para validar licenças de plugins Minecraft pela API do Artix.
+<img src="docs/banner.svg" alt="Artix License" width="100%">
 
-| Campo | Valor |
-| --- | --- |
-| Tipo | Guia de integração com plugin de exemplo |
-| Exemplo | Plugin Paper 1.20 (Java 17) |
-| API | `https://artix.sideload.lol/api/license/validate` |
-| Mantido por | stumdev |
-| Licença | Não especificada |
+<br>
 
-Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o sistema de licenças do Artix. O plugin de exemplo está em [`minecraft-license-plugin/`](minecraft-license-plugin).
+[![License: MIT](https://img.shields.io/badge/license-MIT-66E1F5.svg)](LICENSE)
+![Java](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white)
+![Paper](https://img.shields.io/badge/Paper-1.20-F7CF0D)
+![Gradle](https://img.shields.io/badge/Gradle-Kotlin%20DSL-02303A?logo=gradle&logoColor=white)
+![API](https://img.shields.io/badge/API-REST%20%2B%20JSON-66E1F5)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-66E1F5.svg)](CONTRIBUTING.md)
 
-## URL da API (produção)
+**Guia e exemplo Java para validar licenças de plugins Minecraft pela API do Artix.**
 
-- `https://artix.sideload.lol/api/license/validate`
+[Início rápido](#início-rápido) · [Request e response](#request) · [Plugin de exemplo](#plugin-de-exemplo) · [Contribuir](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
-## O que a API faz (resumo)
+</div>
+
+---
+
+## Sobre
+
+Este repositório explica como **integrar o seu plugin Minecraft** (ou qualquer aplicativo) ao sistema de licenças do [Artix](https://github.com/stumdev/artix-project). Ele traz a referência da API, as regras de boa integração e um **plugin Paper pronto** em [`minecraft-license-plugin/`](minecraft-license-plugin) para você copiar.
+
+## Destaques
+
+- ✅ **Uma chamada só:** um `POST` com a `licenseKey` responde se a licença é válida.
+- 🔒 **Vínculo por IP:** no primeiro uso a chave fica presa ao IP público do servidor, sem você enviar nada.
+- 🧩 **Plugin de exemplo completo:** comandos, validação assíncrona, cache e tolerância a quedas da API.
+- 🛟 **Offline grace:** se a API cair, o servidor continua funcionando por um tempo desde a última validação bem-sucedida.
+- ☕ **Só Java padrão:** usa o `HttpClient` do Java 17, sem bibliotecas extras.
+
+---
+
+## Sumário
+
+- [Início rápido](#início-rápido)
+- [O que a API faz](#o-que-a-api-faz)
+- [Request](#request)
+- [Response](#response)
+- [Regras importantes](#regras-importantes)
+- [Plugin de exemplo](#plugin-de-exemplo)
+- [Exemplo Java mínimo](#exemplo-java-mínimo)
+- [FAQ](#faq)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
+
+## Início rápido
+
+URL da API (produção):
+
+```
+https://artix.sideload.lol/api/license/validate
+```
+
+Teste pelo terminal:
+
+```bash
+curl -s -X POST \
+  'https://artix.sideload.lol/api/license/validate' \
+  -H 'Content-Type: application/json' \
+  -d '{"licenseKey":"ARTIX-XXXX-XXXX-XXXX-XXXX","serverName":"MyServer","pluginVersion":"1.0.0"}'
+```
+
+## O que a API faz
 
 - Valida se a `licenseKey` existe e está **ACTIVE**.
-- Bloqueia chaves **REVOKED**/**EXPIRED** e chaves com `expiresAt` vencido.
-- Faz **bind por IP público do request** no primeiro uso (`boundIp`).
-  - Depois disso, a key só valida a partir do **mesmo IP**.
-- Registra o uso (telemetria) para auditoria.
-- Aplica **rate limit por IP** (padrão 100 req / 15 min).
+- Bloqueia chaves **REVOKED** ou **EXPIRED** e chaves com `expiresAt` vencido.
+- Faz **vínculo pelo IP público do request** no primeiro uso (`boundIp`). Depois disso, a chave só valida a partir do **mesmo IP**.
+- Registra o uso para auditoria.
+- Aplica **limite de requisições por IP** (padrão: 100 a cada 15 minutos).
 
-> Importante: o IP usado é o do **request** (headers do proxy/CDN). Seu plugin **não precisa** (e não deve) enviar `serverIp`.
+> O IP usado é o do **request** (headers do proxy/CDN). O seu plugin **não precisa** (e não deve) enviar `serverIp`.
 
 ## Request
 
-### Body mínimo
+Body mínimo:
 
 ```json
 {
@@ -37,7 +83,7 @@ Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o
 }
 ```
 
-### Metadados opcionais (recomendado)
+Com metadados opcionais (recomendado):
 
 ```json
 {
@@ -49,7 +95,7 @@ Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o
 
 ## Response
 
-### Licença válida (HTTP 200)
+Licença válida (HTTP 200):
 
 ```json
 {
@@ -66,7 +112,7 @@ Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o
 }
 ```
 
-### Licença inválida (HTTP 200)
+Licença inválida (HTTP 200):
 
 ```json
 {
@@ -75,31 +121,51 @@ Este guia explica como **integrar seu plugin Minecraft** (ou qualquer app) com o
 }
 ```
 
-### Erros HTTP
+Erros HTTP:
 
-- `400` parâmetros inválidos (ex.: formato de key inválido, não foi possível determinar IP público do request)
-- `429` rate limit
-- `500` erro interno
+| Código | Quando |
+|---|---|
+| `400` | parâmetros inválidos (formato de chave inválido, IP público do request indeterminado) |
+| `429` | limite de requisições atingido |
+| `500` | erro interno |
 
 ## Regras importantes
 
-- **Faça a validação de forma assíncrona** (não bloqueie a main thread do servidor).
-- **Use cache** (ex.: 5–10 minutos). Não valide em loop.
-- **Implemente offline grace** (ex.: 30–60 minutos):
-  - se a API estiver fora, você pode manter o plugin ativo por um tempo desde a última validação bem-sucedida.
-- **Não exponha a key** no chat/log para jogadores.
-- **Não hardcode a key no jar**: leia de `config.yml`.
+- **Valide de forma assíncrona**: nunca bloqueie a thread principal do servidor.
+- **Use cache** (por exemplo, 5 a 10 minutos). Não valide em loop.
+- **Implemente offline grace** (por exemplo, 30 a 60 minutos): se a API estiver fora, mantenha o plugin ativo por um tempo desde a última validação bem-sucedida.
+- **Não exponha a chave** no chat ou nos logs para jogadores.
+- **Não deixe a chave fixa no jar**: leia de `config.yml`.
 
-## Exemplo pronto (Paper/Spigot)
+## Plugin de exemplo
 
-Existe um exemplo simples (um único arquivo Java) no repositório, você pode conferir nos arquivos.
-Ele já vem com:
+Em [`minecraft-license-plugin/`](minecraft-license-plugin): um plugin Paper 1.20 (Java 17) de um único arquivo, com:
 
-- Comandos para setar/validar key
-- Cache em `cache.yml`
-- Offline grace
+- Comandos `/artixlicense set <chave>`, `/artixlicense validate` e `/artixlicense status` (permissão `artixlicense.admin`, padrão: OP).
+- Validação assíncrona com timeout.
+- Cache do último resultado em `cache.yml`.
+- Offline grace configurável.
 
-## Exemplo Java (snippet minimalista)
+Configuração (`config.yml`):
+
+```yaml
+apiUrl: "https://artix.sideload.lol/api/license/validate"
+licenseKey: ""
+serverName: "MyServer"
+pluginVersion: "1.0.0"
+cacheMinutes: 10          # evita validar a cada reinício
+offlineGraceMinutes: 60   # tolerância se a API cair
+debug: false
+```
+
+Para compilar:
+
+```bash
+cd minecraft-license-plugin
+gradle build              # o jar sai em build/libs/
+```
+
+## Exemplo Java mínimo
 
 ```java
 HttpClient client = HttpClient.newHttpClient();
@@ -115,20 +181,18 @@ HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString()
 boolean valid = res.statusCode() == 200 && res.body().replaceAll("\\s+", "").contains("\"valid\":true");
 ```
 
-## Teste rápido via cURL
-
-```bash
-curl -s -X POST \
-  'https://artix.sideload.lol/api/license/validate' \
-  -H 'Content-Type: application/json' \
-  -d '{"licenseKey":"ARTIX-XXXX-XXXX-XXXX-XXXX","serverName":"MyServer","pluginVersion":"1.0.0"}'
-```
-
 ## FAQ
 
-### “Meu servidor mudou de IP e a licença parou”
-Isso é esperado: a licença fica vinculada ao primeiro IP (`boundIp`). É necessário **resetar o IP** no painel/admin e validar novamente para fazer bind no novo IP.
+**Meu servidor mudou de IP e a licença parou.**
+É esperado: a licença fica vinculada ao primeiro IP (`boundIp`). Peça o **reset do IP** no painel do Artix e valide de novo para vincular o novo endereço.
 
-### “Estou atrás de proxy, vai validar?”
-Sim, desde que o proxy/CDN passe o IP público corretamente (`X-Forwarded-For`, `X-Real-IP`, `CF-Connecting-IP`).
+**Estou atrás de proxy, vai validar?**
+Sim, desde que o proxy/CDN repasse o IP público corretamente (`X-Forwarded-For`, `X-Real-IP` ou `CF-Connecting-IP`).
 
+## Contribuindo
+
+Contribuições são bem-vindas! Leia o [guia de contribuição](CONTRIBUTING.md) e o [código de conduta](CODE_OF_CONDUCT.md). Para falhas de segurança, veja a [política de segurança](SECURITY.md).
+
+## Licença
+
+Distribuído sob a licença [MIT](LICENSE).

@@ -1,0 +1,37 @@
+name: Relatar um bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: textarea
+    id: o-que-aconteceu
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o problema e o que você esperava. Se a API respondeu com erro, cole a resposta (sem a chave).
+    validations:
+      required: true
+  - type: textarea
+    id: como-reproduzir
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Configurei a chave com ...
+        2. Rodei /artixlicense validate ...
+        3. Vi o erro ...
+    validations:
+      required: true
+  - type: dropdown
+    id: parte
+    attributes:
+      label: Onde acontece
+      options: [Plugin de exemplo, API de validação, Documentação, Não sei]
+    validations:
+      required: true
+  - type: input
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Versão do servidor (Paper/Spigot) e do Java.
+      placeholder: Paper 1.20.6, Java 17
+  - type: markdown
+    attributes:
+      value: "⚠️ Nunca cole a sua chave de licença aqui."
